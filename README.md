@@ -4,7 +4,6 @@
 > 1. ***[Dive Into Design Patterns](design-patterns/)*** — Object-oriented architecture, SOLID principles, and the 23 Gang of Four design patterns (Alexander Shvets).
 > 2. ***[Dive Into Refactoring](refactoring/)*** — The 24 classic code smells, 66 safe refactoring techniques, and comprehensive testing strategies (Alexander Shvets & Martin Fowler).
 > 3. ***[Python Backend Testing & Quality Architecture](python-backend-testing/)*** — Test-driven development, modern pytest mastery, architecture & domain testing, and framework test harnesses (Brian Okken, Harry Percival & Bob Gregory).
-> 4. ***[English Grammar Knowledge System](english-grammar/)*** — An enterprise-grade English grammar curriculum and professional communication handbook spanning CEFR A1 to C2 (Raymond Murphy & Michael Swan).
 >
 > All implementations are written in modern, type-hinted **Python 3 (Python 3.10+)** with companion **`pytest`** behavioral contracts and interactive text-based **Mermaid.js** diagrams.
 
@@ -87,14 +86,6 @@ An enterprise-grade testing manual and quality architecture encyclopedia based o
 * 💳 **[12. Practical Reference Projects (6)](python-backend-testing/practical-projects/)**: Production test suites for User Management, OAuth2/JWT Authentication, E-Commerce Inventory Reservation, Stripe Webhook Idempotency, and Complete Template Scaffold.
 * ⚖️ **[13. Comparative Architecture (8)](python-backend-testing/comparisons/)**: Objective trade-off matrices: Unit vs. Int vs. E2E, Pytest vs. Unittest, Mocks vs. Fakes vs. Stubs, TestClient vs. HTTPX, SQLite vs. PostgreSQL, and Sync vs. Async.
 * 📋 **[14. Resources & Senior Playbooks (6)](python-backend-testing/resources/)**: 30 Senior/Staff Interview Q&As, Complete Pytest CLI Cheat Sheet, Enterprise Testing Strategy RFC Template, Flaky Test Playbook, and Comprehensive Glossary.
-
----
-
-### 4. 📚 [English Grammar Knowledge System](english-grammar/) (17 Modules)
-A modular English language curriculum and technical communication reference spanning CEFR A1 to C2 based on Raymond Murphy (*Essential Grammar in Use*, *English Grammar in Use*) and Michael Swan (*Practical English Usage*):
-* 🧱 **[01. Foundations](english-grammar/01-foundations/)**: [Parts of Speech](english-grammar/01-foundations/parts-of-speech.md), [Sentence Elements & S-V-O-C-A](english-grammar/01-foundations/sentence-elements-and-word-order.md), [Phrases & Clauses](english-grammar/01-foundations/phrases-and-clauses.md), [Sentence Types](english-grammar/01-foundations/sentence-types-and-purposes.md), [Punctuation Mastery](english-grammar/01-foundations/punctuation-mastery.md), and [Capitalization & Spelling Rules](english-grammar/01-foundations/capitalization-and-spelling-rules.md).
-* ⚙️ **[Core Mechanics](english-grammar/)**: Verbs & Auxiliaries, All 12 Tenses, Nouns & Articles, Pronouns & Determiners, Adjectives & Adverbs, Prepositions, Conjunctions & Relative Clauses, Voice & Reported Speech, Conditionals 0–3, and Non-Finite Verbals.
-* 🎯 **[Advanced & Workplace Communication](english-grammar/)**: Negative Inversion, Cleft Sentences, Subjunctive, 18 Disambiguation Matrices (*since* vs *for*, *make* vs *do*), Technical Documentation Writing, PR Review Phrasing, and Common ESL Diagnostic Antipatterns.
 
 ---
 
