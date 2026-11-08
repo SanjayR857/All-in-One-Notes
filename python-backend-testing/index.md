@@ -203,22 +203,23 @@ Production-grade, end-to-end test suites for common backend domains.
 
 ---
 
-### [13. Comparative Architecture Guides (7 Guides)](comparisons/)
+### [13. Comparative Architecture Guides (8 Guides)](comparisons/)
 Side-by-side technical trade-off matrices.
 - [Comparisons Overview](comparisons/index.md)
 - [Unit vs. Integration vs. End-to-End](comparisons/unit-vs-integration-vs-e2e.md)
-- [Mock vs. MagicMock vs. Stub vs. Fake](comparisons/mock-vs-magicmock-vs-stub-vs-fake.md)
-- [TestClient vs. httpx.AsyncClient vs. Aiohttp](comparisons/testclient-vs-asyncclient.md)
-- [SQLite In-Memory vs. Docker PostgreSQL](comparisons/sqlite-vs-docker-postgres.md)
 - [Pytest vs. Unittest](comparisons/pytest-vs-unittest.md)
-- [TDD vs. Test-After vs. BDD](comparisons/tdd-vs-test-after-vs-bdd.md)
+- [Test Doubles: Mocks vs. Fakes vs. Stubs vs. Spies](comparisons/mock-vs-fake-vs-stub.md)
+- [TestClient vs. HTTPX AsyncClient vs. Live Server](comparisons/testclient-vs-httpx-vs-live.md)
+- [SQLite vs. PostgreSQL in Database Integration Testing](comparisons/sqlite-vs-postgresql-testing.md)
+- [Synchronous vs. Asynchronous Testing Paradigms](comparisons/sync-vs-async-testing.md)
+- [pytest-mock vs. unittest.mock](comparisons/pytest-mock-vs-unittest-mock.md)
 
 ---
 
 ### [14. Resources, Checklists & Senior Playbooks (6 Guides)](resources/)
 Essential toolkits, interview preparation, and debugging cheat sheets.
 - [Resources Overview](resources/index.md)
-- [Senior Backend Testing Interview Q&A](resources/interview-qa.md) — 30 deep architectural questions for Staff/Lead engineers.
+- [Senior & Staff Backend Testing Interview Q&A](resources/interview-questions.md) — 30 deep architectural questions for Staff/Lead engineers.
 - [The Comprehensive Pytest CLI & Configuration Cheat Sheet](resources/pytest-cheat-sheet.md) — Options, env vars, ini flags, formatting.
 - [Backend Quality Strategy & Test Plan Template](resources/testing-strategy-template.md) — Engineering RFC template for backend teams.
 - [Flaky Test Root-Cause Playbook](resources/flaky-test-playbook.md) — Systematic guide to identifying, isolating, and killing test flakes.
