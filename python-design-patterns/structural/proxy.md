@@ -9,14 +9,21 @@ summary: "Acts as a surrogate to control access, lazy-load via Python descriptor
 
 # Proxy (Structural)
 
-## 1. 30-Second Interview Answer
-> **Proxy** provides a surrogate object that controls access to a real object—letting you run checks **before** forwarding the call. The four classic types are **Virtual** (lazy initialization), **Protection** (permission checks), **Remote** (network/RPC stub), and **Smart** (logging/reference counting).
+## 1. Clear Definition
+**Proxy** is a structural design pattern that provides a **surrogate (stand-in) object** implementing the same interface as a real service so it can run checks—like **authorization, lazy initialization, caching, or logging**—before forwarding calls to the real object.
+
+> **30-Second Interview Summary:**  
+> *"Proxy controls access to a real object transparently. The four classic types are **Virtual** (lazy loading), **Protection** (permission checks), **Remote** (RPC stub), and **Smart** (reference counting/logging)."*
+
+**Key Participants:**
+* **Real Subject (`SensitiveInfo`):** The underlying protected or expensive object.
+* **Proxy (`InfoProxy`):** Guards access and delegates valid calls to `_protected`.
 
 ---
 
-## 2. Real-Life & Software Examples *(Mastering Python Design Patterns)*
-- **Real-Life Analogy:** **OS `sudo` / admin privileges** before installing software (Protection Proxy) or a **debit card** acting as a proxy for your bank account.
-- **Python Software Example:** **Python Descriptors (`__get__`)** for lazy properties (`@functools.cached_property`) and **`weakref.proxy()`** / `unittest.mock.Mock`.
+## 2. Real-Time & Real-World Examples
+* **Real-Life Analogy (*Mastering Python Design Patterns*):** **OS `sudo` / admin privileges** required before installing software (Protection Proxy), or a **debit card** acting as a proxy for your bank account.
+* **Real-Time Software Example:** **Python Descriptors (`__get__`)** / **`@functools.cached_property`** for lazy loading (Virtual Proxy), **SQLAlchemy lazy relationships**, and **`unittest.mock.Mock`**.
 
 ---
 
@@ -26,13 +33,13 @@ summary: "Acts as a surrogate to control access, lazy-load via Python descriptor
 classDiagram
     class SensitiveInfo {
         -users: list
-        +read()
+        +read() list
         +add(user: str)
     }
     class InfoProxy {
-        -protected: SensitiveInfo
-        -secret: str
-        +read()
+        -_protected: SensitiveInfo
+        -_secret: str
+        +read() list
         +add(user: str, key: str)
     }
     InfoProxy --> SensitiveInfo : guards access
@@ -40,62 +47,79 @@ classDiagram
 
 ---
 
-## 4. Python Implementation *(Book Example: `LazyProperty` Descriptor + Protection Proxy)*
+## 4. Python Implementation
 
 ```python
-from typing import Any
-
-
-# 1. Virtual Proxy via Python Descriptor (Lazy Initialization)
-class LazyProperty:
-    def __init__(self, method: Any) -> None:
-        self.method = method
-        self.method_name = method.__name__
-
-    def __get__(self, obj: Any, cls: Any) -> Any:
-        if obj is None:
-            return self
-        value = self.method(obj)
-        setattr(obj, self.method_name, value)  # Cache on instance
-        return value
-
-
-# 2. Protection Proxy
 class SensitiveInfo:
+    """Real subject holding sensitive user records."""
+
     def __init__(self) -> None:
         self.users = ["nick", "tom", "ben"]
 
     def read(self) -> list[str]:
-        return self.users
+        return list(self.users)
 
     def add(self, user: str) -> None:
         self.users.append(user)
 
 
 class InfoProxy:
+    """Protection Proxy that verifies a secret key before allowing mutations."""
+
     def __init__(self, secret: str = "0xdeadbeef") -> None:
         self._protected = SensitiveInfo()
         self._secret = secret
 
     def read(self) -> list[str]:
+        """Allow read access without extra credentials."""
         return self._protected.read()
 
     def add(self, user: str, key: str) -> None:
+        """Enforce authorization check before delegating write to SensitiveInfo."""
         if key != self._secret:
-            raise PermissionError("Invalid secret key!")
+            raise PermissionError("Invalid secret key: access denied")
         self._protected.add(user)
+        print(f"Added user: {user}")
+
+
+if __name__ == "__main__":
+    proxy = InfoProxy()
+    print("Users:", proxy.read())
+    proxy.add("alice", key="0xdeadbeef")
+    try:
+        proxy.add("eve", key="wrong")
+    except PermissionError as err:
+        print("Blocked:", err)
+```
+
+> **Pythonic Virtual Proxy Tip (*Mastering Python Design Patterns*):** For lazy-loaded attributes, use `@functools.cached_property` (or a `__get__` descriptor) so expensive values are computed only on first access.
+
+**Sample Output:**
+```text
+Users: ['nick', 'tom', 'ben']
+Added user: alice
+Blocked: Invalid secret key: access denied
 ```
 
 ---
 
-## 5. Use Cases & When to Skip (Pythonic Alternatives)
-- **Use when:** Deferring expensive resource loading (DB/network), enforcing authorization, or adding transparent caching/logging.
-- **Pythonic Built-in:** Use `@functools.cached_property` instead of writing a custom `LazyProperty` descriptor.
+## 5. Use Cases & When to Skip
+* **When to Use:**
+  * Deferring expensive object creation (**Virtual Proxy**), enforcing RBAC (**Protection Proxy**), caching API responses, or representing remote services (**Remote Proxy**).
+* **When to Skip:**
+  * If you only need lazy attribute evaluation on a single class, `@functools.cached_property` is simpler than a separate Proxy class.
 
 ---
 
-## 6. Rapid Follow-Up Q&As
-- **Q: What are the 4 types of Proxy?**  
-  **A:** **Remote**, **Virtual** (lazy init), **Protection** (auth), and **Smart** (extra bookkeeping/locking).
-- **Q: Proxy vs. Decorator?**  
-  **A:** [Decorator](decorator.md) **adds behaviors** explicitly chosen by the caller; **Proxy** **controls access/lifecycle** transparently.
+## 6. Don't Confuse With
+
+| Pattern | Key Difference |
+| :--- | :--- |
+| **[Decorator](decorator.md)** | **Adds behaviors** explicitly stacked by the caller; Proxy **controls access/lifecycle** transparently. |
+| **[Adapter](adapter.md)** | **Changes** the interface; Proxy preserves the **same** interface. |
+
+---
+
+## 7. Rapid Interview Q&As
+* **Q: Name the 4 types of Proxy.**  
+  **A:** **Remote** (network stub), **Virtual** (lazy init), **Protection** (auth/permissions), and **Smart** (extra bookkeeping like locking or ref-counting).

@@ -2,35 +2,23 @@
 
 ## 1. Primary Source & Philosophy
 - **Primary Reference:** *Mastering Python Design Patterns* by Sakis Kasampalis (`../Mastering Python Design Patterns - Start Learning Python -- Kasampalis Sakis -- ( WeLib.gl ).pdf`).
-- **Core Goal:** Combine the book's **Python-first idioms, real-life analogies, and software examples** with **concise, interview-ready structure** (80–120 lines per note, zero textbook bloat).
-- **Python Version:** Modernize the book's Python 3 code to clean **Python 3.10+** (`typing.Protocol`, `abc.ABC`, `@dataclass`, union types `X | Y`, `Enum`).
+- **Core Goal:** Clear, scannable, interview-ready Python 3.10+ notes (~110–150 lines) with **detailed docstrings, inline comments, and sample output**.
 
 ---
 
-## 2. Standard Note Structure (6 Sections)
-Every pattern note in `python-design-patterns/` must follow this exact structure:
+## 2. Standard Note Order (7 Clean Sections)
+Every pattern note in `python-design-patterns/` must follow this exact numbered heading structure (for a clean right-hand TOC in the HTML viewer):
 
-1. **Frontmatter (YAML):**
-   - Required keys: `title`, `category: "Python Design Patterns"`, `type`, `permalink`, `tags`, `summary`.
-2. **1. 30-Second Interview Answer:**
-   - 2–3 sentences you can say out loud: what the pattern does, what problem it solves, and its key trade-off.
-3. **2. Real-Life & Software Examples (from the Book):**
-   - **Real-life analogy** used in *Mastering Python Design Patterns*.
-   - **Python software/ecosystem example** (e.g., Django, Flask, `functools`, `pyparsing`, `itertools`, `abc`).
-4. **3. Mental Model (Mermaid Diagram):**
-   - **One** clean Mermaid `classDiagram` or `flowchart` showing the pattern's structure.
-5. **4. Python Implementation:**
-   - One clean, runnable Python 3.10+ implementation inspired by the book's chapter example (with type hints and brief inline comments).
-6. **5. Use Cases & When to Skip (Pythonic Alternatives):**
-   - Bullet list of when to apply the pattern + when Python's built-in features (first-class functions, `@decorator`, generators, `@dataclass`, `sys.modules`) make the class-heavy pattern unnecessary.
-7. **6. Rapid Follow-Up Q&As:**
-   - 2–3 high-probability interview questions and concise answers.
+1. `## 1. Clear Definition` — Plain-English definition, 30-second spoken interview summary, and key participants.
+2. `## 2. Real-Time & Real-World Examples` — Real-life analogy (from the book) + real-time Python backend/system example.
+3. `## 3. Mental Model` — One compact Mermaid diagram (`flowchart` or `classDiagram`).
+4. `## 4. Python Implementation` — **One** primary, runnable Python 3.10+ example with full docstrings, inline comments explaining *why*, and a short `Sample Output` block.
+5. `## 5. Use Cases & When to Skip` — Concrete **When to Use** vs. **When to Skip** (Pythonic alternatives).
+6. `## 6. Don't Confuse With` — Compact 2-row comparison table against the closest look-alike pattern(s).
+7. `## 7. Rapid Interview Q&As` — 2–3 high-frequency follow-up questions with concise answers.
 
 ---
 
-## 3. Strict Quality Rules
-- **No Java / JVM / Spring Leftovers:** Never mention `JVM`, `Bill Pugh`, `Joshua Bloch`, `Spring AOP`, `javax.*`, `Calendar.getInstance`, `StringBuilder`, `instanceof`, or `OutOfMemoryError`.
-- **Keep Notes Scannable:** Target ~75–120 lines per pattern note. Prefer tables and short bullets over long paragraphs.
-- **Viewer Compatibility:**
-  - Use standard GFM tables and fenced `python` / `mermaid` code blocks.
-  - Use relative `.md` links (`../structural/adapter.md`, `index.md`) so the GitHub Markdown Viewer navigates inline.
+## 3. Quality Rules
+- **No Java / JVM / Spring Leftovers:** Pure Python 3.10+ (`Protocol`, `ABC`, `@dataclass`, `X | Y`).
+- **Viewer Compatibility:** Clean headings (no cluttered emojis in `##` TOC headings), standard GFM tables, `mermaid` blocks, and relative `.md` links.

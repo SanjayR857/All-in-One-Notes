@@ -9,14 +9,21 @@ summary: "Minimizes memory usage by sharing immutable intrinsic state across man
 
 # Flyweight (Structural)
 
-## 1. 30-Second Interview Answer
-> **Flyweight** reduces memory consumption when an application must create thousands or millions of similar objects. It separates **intrinsic state** (shared, immutable, cached in a pool) from **extrinsic state** (unique, mutable, passed into `render(x, y)` by the caller). In Python, `weakref.WeakValueDictionary` lets unused flyweights be garbage-collected automatically.
+## 1. Clear Definition
+**Flyweight** is a structural optimization pattern that reduces RAM usage when an application creates thousands or millions of similar objects. It shares immutable **intrinsic state** across instances via a pool, while unique **extrinsic state** is passed in by the caller at method-call time.
+
+> **30-Second Interview Summary:**  
+> *"Flyweight avoids duplicating identical heavy data in memory by splitting shared immutable state (intrinsic) from per-instance coordinates/state (extrinsic). In Python, `weakref.WeakValueDictionary` caches flyweights while allowing unused ones to be garbage-collected."*
+
+**Key Participants:**
+* **Flyweight (`Tree`):** Stores shared intrinsic state (`tree_type`) and accepts extrinsic state (`age, x, y`) in `render()`.
+* **Flyweight Pool (`WeakValueDictionary`):** Returns an existing flyweight instance instead of allocating a duplicate.
 
 ---
 
-## 2. Real-Life & Software Examples *(Mastering Python Design Patterns)*
-- **Real-Life Analogy:** **Bookstore popular-picks shelf** (acting as a fast shared cache before asking the librarian) and **FPS game soldiers** sharing team appearance/actions while keeping health/location per soldier.
-- **Python Software Example:** **Exaile music player** (reuses track objects by URL) and **Peppy editor** (shares major-mode status bar properties).
+## 2. Real-Time & Real-World Examples
+* **Real-Life Analogy (*Mastering Python Design Patterns*):** **Bookstore popular-picks shelf** (fast shared cache) and **FPS game soldiers** sharing team 3D models/actions while keeping per-soldier health and coordinates.
+* **Real-Time Software Example:** **Exaile music player** (reuses track objects by URL), **Peppy editor** (shares status-bar properties), and CPython's **small-int cache (`-5..256`)** / **`sys.intern()`**.
 
 ---
 
@@ -25,16 +32,16 @@ summary: "Minimizes memory usage by sharing immutable intrinsic state across man
 ```mermaid
 classDiagram
     class Tree {
-        -_pool: WeakValueDictionary
+        +pool: WeakValueDictionary
         +tree_type: TreeType
         +render(age: int, x: int, y: int)
     }
-    Tree --> Tree : returns cached instance per TreeType
+    Tree --> Tree : reuses cached instance per TreeType
 ```
 
 ---
 
-## 4. Python Implementation *(Book Example: `Tree` Renderer with `WeakValueDictionary`)*
+## 4. Python Implementation
 
 ```python
 from enum import Enum
@@ -42,42 +49,73 @@ from weakref import WeakValueDictionary
 
 
 class TreeType(Enum):
+    """Shared, immutable intrinsic tree categories."""
+
     APPLE_TREE = 1
     CHERRY_TREE = 2
     PEACH_TREE = 3
 
 
 class Tree:
+    """
+    Flyweight that shares one instance per TreeType using WeakValueDictionary
+    so unused flyweights are automatically garbage-collected.
+    """
+
     pool: WeakValueDictionary[TreeType, "Tree"] = WeakValueDictionary()
 
     def __new__(cls, tree_type: TreeType) -> "Tree":
+        """Return an existing flyweight from the pool or create and cache a new one."""
         obj = cls.pool.get(tree_type)
-        if not obj:
+        if obj is None:
             obj = super().__new__(cls)
             cls.pool[tree_type] = obj
             obj.tree_type = tree_type
         return obj
 
     def render(self, age: int, x: int, y: int) -> None:
+        """Render using shared intrinsic `tree_type` + caller-supplied extrinsic state."""
         print(f"Render {self.tree_type.name} (age={age}) at ({x}, {y})")
 
 
-t1 = Tree(TreeType.APPLE_TREE)
-t2 = Tree(TreeType.APPLE_TREE)
-assert t1 is t2  # Same shared flyweight object
-t1.render(age=5, x=10, y=20)
+if __name__ == "__main__":
+    t1 = Tree(TreeType.APPLE_TREE)
+    t2 = Tree(TreeType.APPLE_TREE)
+    t3 = Tree(TreeType.CHERRY_TREE)
+
+    print("t1 is t2:", t1 is t2)  # Same shared flyweight object
+    print("t1 is t3:", t1 is t3)  # Different type -> different flyweight
+    t1.render(age=5, x=10, y=20)
+```
+
+**Sample Output:**
+```text
+t1 is t2: True
+t1 is t3: False
+Render APPLE_TREE (age=5) at (10, 20)
 ```
 
 ---
 
 ## 5. Use Cases & When to Skip
-- **Use when:** Creating a huge number of expensive objects that share identical immutable properties (games, graphics, text editors, embedded systems).
-- **When to Skip:** Don't prematurely optimize with Flyweight unless profiling shows object memory is an actual bottleneck. Combine with `__slots__` for extra savings.
+* **When to Use:**
+  * Profiling proves massive object counts are exhausting RAM (games, map renderers, text editors, embedded systems).
+* **When to Skip:**
+  * Don't prematurely optimize with Flyweight when object counts are small—consider `__slots__` first for simple per-instance memory savings.
 
 ---
 
-## 6. Rapid Follow-Up Q&As
-- **Q: Why use `WeakValueDictionary` instead of a plain `dict`?**  
-  **A:** A plain `dict` keeps strong references forever (memory leak). `WeakValueDictionary` allows Python's GC to reclaim a flyweight once no external references remain.
-- **Q: Intrinsic vs. Extrinsic state?**  
-  **A:** **Intrinsic** = shared & immutable (`tree_type`); **Extrinsic** = unique & mutable (`age`, `x`, `y`), passed by the caller.
+## 6. Don't Confuse With
+
+| Pattern | Key Difference |
+| :--- | :--- |
+| **[Prototype](../creational/prototype.md)** | Clones objects so each copy can mutate **independently**; Flyweight **shares** one immutable object. |
+| **[Proxy](proxy.md)** | Controls access to a single target; Flyweight pools many shared immutable objects. |
+
+---
+
+## 7. Rapid Interview Q&As
+* **Q: Why use `WeakValueDictionary` instead of a normal `dict`?**  
+  **A:** A normal `dict` holds strong references forever, causing a memory leak if flyweight keys grow unboundedly; `WeakValueDictionary` lets Python's GC reclaim unused instances.
+* **Q: Why must intrinsic state be immutable?**  
+  **A:** Because hundreds of callers share the same flyweight instance—mutating it would corrupt every caller.

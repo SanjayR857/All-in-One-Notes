@@ -9,14 +9,23 @@ summary: "Separates step-by-step construction of a complex object from its repre
 
 # Builder (Creational)
 
-## 1. 30-Second Interview Answer
-> **Builder** separates the **step-by-step construction** of a complex object from its **final representation**, so the same assembly steps can produce different products. In Python, use Builder when an object has ordered preparation steps or multiple representations—not just to replace keyword arguments (where `@dataclass` is simpler).
+## 1. Clear Definition
+**Builder** is a creational design pattern that separates the **step-by-step construction** of a complex object from its **final representation**, so the same assembly sequence can produce different outputs.
+
+> **30-Second Interview Summary:**  
+> *"Builder constructs complex objects incrementally in ordered steps before finalizing them. In Python, don't use Builder just for optional parameters (`@dataclass` + defaults handles that); use it when assembly requires ordered steps, validation, or different representations from the same build process."*
+
+**Key Participants:**
+* **Product (`Pizza`):** The complex object being assembled.
+* **Builder (`PizzaBuilder`):** Interface defining each construction step.
+* **Concrete Builder (`MargaritaBuilder`):** Implements steps for one specific representation.
+* **Director (`Waiter`):** Orchestrates the exact order of construction steps.
 
 ---
 
-## 2. Real-Life & Software Examples *(Mastering Python Design Patterns)*
-- **Real-Life Analogy:** **Fast-food restaurant**—the cashier (**Director**) gives instructions to the crew (**Builder**), who follow the same assembly procedure to pack different burgers and box sizes. Also: ordering a **preconfigured** computer (Factory) vs. a **custom-built** computer (Builder).
-- **Python Software Example:** **`django-widgy`** (tree/HTML page builder) and **`django-query-builder`** (dynamic SQL query assembly).
+## 2. Real-Time & Real-World Examples
+* **Real-Life Analogy (*Mastering Python Design Patterns*):** **Fast-food restaurant**—the cashier (**Director**) sends the order to the crew (**Builder**), who follow the same assembly sequence for different burgers and box sizes.
+* **Real-Time Software Example:** **`django-query-builder`** & **SQLAlchemy `select()`** (step-by-step SQL query assembly) and **`django-widgy`** (HTML page tree builder).
 
 ---
 
@@ -25,27 +34,22 @@ summary: "Separates step-by-step construction of a complex object from its repre
 ```mermaid
 classDiagram
     class Waiter {
-        -builder: PizzaBuilder
-        +construct_pizza()
-        +pizza Pizza
+        +construct_pizza(builder: PizzaBuilder) Pizza
     }
     class PizzaBuilder {
         <<Protocol>>
         +prepare_dough()
         +add_sauce()
         +add_topping()
-        +bake()
     }
     class MargaritaBuilder
-    class CreamyBaconBuilder
     Waiter --> PizzaBuilder
     PizzaBuilder <|.. MargaritaBuilder
-    PizzaBuilder <|.. CreamyBaconBuilder
 ```
 
 ---
 
-## 4. Python Implementation *(Book Example: Pizza Ordering)*
+## 4. Python Implementation
 
 ```python
 from dataclasses import dataclass, field
@@ -54,6 +58,8 @@ from typing import Protocol
 
 @dataclass
 class Pizza:
+    """Product assembled incrementally across multiple preparation steps."""
+
     name: str
     dough: str = ""
     sauce: str = ""
@@ -61,15 +67,20 @@ class Pizza:
 
 
 class PizzaBuilder(Protocol):
+    """Builder contract defining ordered steps to assemble a Pizza."""
+
     pizza: Pizza
+
     def prepare_dough(self) -> None: ...
     def add_sauce(self) -> None: ...
     def add_topping(self) -> None: ...
 
 
 class MargaritaBuilder:
+    """Concrete Builder for a classic Margarita pizza."""
+
     def __init__(self) -> None:
-        self.pizza = Pizza("Margarita")
+        self.pizza = Pizza(name="Margarita")
 
     def prepare_dough(self) -> None:
         self.pizza.dough = "thin"
@@ -81,34 +92,49 @@ class MargaritaBuilder:
         self.pizza.toppings.extend(["mozzarella", "oregano"])
 
 
-class Waiter:  # Director
-    def __init__(self) -> None:
-        self._builder: PizzaBuilder | None = None
+class Waiter:
+    """Director that enforces the exact order of preparation steps."""
 
     def construct_pizza(self, builder: PizzaBuilder) -> Pizza:
-        self._builder = builder
+        """Execute all build steps in order and return the finished Pizza."""
         builder.prepare_dough()
         builder.add_sauce()
         builder.add_topping()
         return builder.pizza
 
 
-pizza = Waiter().construct_pizza(MargaritaBuilder())
-assert pizza.sauce == "tomato"
+if __name__ == "__main__":
+    pizza = Waiter().construct_pizza(MargaritaBuilder())
+    print(pizza)
+```
+
+**Sample Output:**
+```text
+Pizza(name='Margarita', dough='thin', sauce='tomato', toppings=['mozzarella', 'oregano'])
 ```
 
 ---
 
-## 5. Use Cases & When to Skip (Pythonic Alternatives)
-- **Use when:**
-  - An object must be built in **ordered steps** (e.g., HTML page, SQL query, custom pizza).
-  - You want to **create an object now and finalize/render it later**, or decouple construction from representation.
-- **When to Skip:** For plain data containers with optional fields, use `@dataclass` with keyword defaults instead of Builder boilerplate.
+## 5. Use Cases & When to Skip
+* **When to Use:**
+  * Complex objects require **ordered construction steps** (SQL queries, HTTP requests, HTML documents).
+  * You need to **construct an object now and finalize/render it later**, or build immutable (`frozen=True`) objects cleanly.
+* **When to Skip:**
+  * Plain data containers with optional fields—Python's **`@dataclass` with keyword defaults** replaces Java-style "telescoping constructor" builders.
 
 ---
 
-## 6. Rapid Follow-Up Q&As
-- **Q: Builder vs. Factory Method?**  
-  **A:** [Factory Method](factory-method.md) creates a preconfigured object in **one call**; **Builder** constructs an object **step by step** under a Director's control (or via fluent chaining).
-- **Q: What is a Fluent Builder?**  
-  **A:** A Builder where each setter returns `self` (`builder.dough("thin").sauce("tomato").build()`), eliminating the need for a separate Director class.
+## 6. Don't Confuse With
+
+| Pattern | Key Difference |
+| :--- | :--- |
+| **[Factory Method](factory-method.md)** | Creates an object in **one call**; Builder constructs **step by step**. |
+| **[Prototype](prototype.md)** | Clones an existing configured object instead of assembling one from scratch. |
+
+---
+
+## 7. Rapid Interview Q&As
+* **Q: What is a Fluent Builder?**  
+  **A:** A Builder where every step method returns `self` (`builder.dough("thin").sauce("tomato").build()`), removing the need for a separate Director class.
+* **Q: Why does `@dataclass` eliminate most Java-style Builders in Python?**  
+  **A:** Python supports named keyword arguments and default values natively, so you don't need a Builder just to avoid a 10-argument positional constructor.

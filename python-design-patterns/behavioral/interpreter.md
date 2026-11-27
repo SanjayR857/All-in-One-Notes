@@ -4,19 +4,27 @@ category: "Python Design Patterns"
 type: "Behavioral"
 permalink: /python-design-patterns/behavioral/interpreter/
 tags: [behavioral, gof, interpreter, dsl, python, interview]
-summary: "Gives advanced users a focused Domain-Specific Language (DSL) on top of parsed structures to control an application safely."
+summary: "Gives domain experts a focused Domain-Specific Language (DSL) on top of parsed structures to control an application safely."
 ---
 
 # Interpreter (Chapter 12)
 
-## 1. 30-Second Interview Answer
-> **Interpreter** lets advanced users control an application through a simple **Domain-Specific Language (DSL)** instead of writing full general-purpose code. Note that the pattern assumes the input is already parsed (e.g., via `pyparsing` or an AST) and focuses on **evaluating/interpreting** those parsed commands against domain objects.
+## 1. Clear Definition
+**Interpreter** is a behavioral design pattern that provides a simple **Domain-Specific Language (DSL)** so advanced users or domain experts can express rules and commands without writing full general-purpose code. Note that Interpreter assumes the input is already parsed (e.g., via `pyparsing` or an AST) and focuses on **evaluating** those parsed tokens.
+
+> **30-Second Interview Summary:**  
+> *"Interpreter evaluates a lightweight Domain-Specific Language (DSL) against domain objects—useful for smart rules, query filters, or automation scripts without exposing `eval()` security risks."*
+
+**Key Participants:**
+* **Context / Receiver (`Boiler`):** Domain object whose state is manipulated by DSL commands.
+* **Parser (`re` / `pyparsing`):** Converts raw text into structured tokens.
+* **Interpreter (`interpret_command`):** Evaluates parsed tokens and invokes domain actions.
 
 ---
 
-## 2. Real-Life & Software Examples *(Mastering Python Design Patterns)*
-- **Real-Life Analogy:** **Musical notation**—sheet music is a domain language of pitch and duration, and the musician acts as the interpreter turning symbols into sound.
-- **Python Software Example:** **`PyT`** (Python HTML generation internal DSL) and **Chromium's Mesa Python bindings** (translating C model commands into Python objects).
+## 2. Real-Time & Real-World Examples
+* **Real-Life Analogy (*Mastering Python Design Patterns*):** **Musical notation**—sheet music is a domain language of pitch and duration, and the musician acts as the interpreter turning symbols into sound.
+* **Real-Time Software Example:** **`PyT`** (Python HTML internal DSL), **Chromium Mesa Python bindings**, and **rule engines / search query filters** (e.g., `status:open AND priority:high`).
 
 ---
 
@@ -24,38 +32,48 @@ summary: "Gives advanced users a focused Domain-Specific Language (DSL) on top o
 
 ```mermaid
 flowchart LR
-    Input["'increase -> boiler temperature -> 3 degrees'"] --> Parser["Parser (pyparsing / regex)"]
-    Parser --> AST["(cmd, target, value)"]
-    AST --> Interp["Interpreter Dispatch"]
-    Interp --> Boiler["Boiler.increase_temp(3)"]
+    DSL["'increase -> boiler temperature -> 3 degrees'"] --> Parse["Parser (regex / pyparsing)"]
+    Parse --> Tokens["('increase', 3)"]
+    Tokens --> Interp["interpret_command()"]
+    Interp --> Target["Boiler.increase_temperature(3)"]
 ```
 
 ---
 
-## 4. Python Implementation *(Book Example: Smart-House `Boiler` DSL)*
+## 4. Python Implementation
 
 ```python
 import re
 
 
 class Boiler:
-    def __init__(self) -> None:
-        self.temperature = 83  # Celsius
+    """Domain receiver representing a smart-home boiler."""
+
+    def __init__(self, temperature: int = 83) -> None:
+        self.temperature = temperature
 
     def increase_temperature(self, amount: int) -> None:
+        """Raise boiler temperature by `amount` degrees Celsius."""
         self.temperature += amount
 
     def decrease_temperature(self, amount: int) -> None:
+        """Lower boiler temperature by `amount` degrees Celsius."""
         self.temperature -= amount
 
 
+_CMD_PATTERN = re.compile(
+    r"^(increase|decrease)\s*->\s*boiler temperature\s*->\s*(\d+)\s*degrees?$"
+)
+
+
 def interpret_command(text: str, boiler: Boiler) -> None:
-    match = re.fullmatch(
-        r"(increase|decrease)\s*->\s*boiler temperature\s*->\s*(\d+)\s*degrees?",
-        text.strip(),
-    )
+    """
+    Parse and interpret a smart-home DSL command safely against `boiler`
+    without using `eval()` or exposing arbitrary Python execution.
+    """
+    match = _CMD_PATTERN.match(text.strip())
     if not match:
-        raise ValueError(f"Unknown DSL command: {text}")
+        raise ValueError(f"Unknown DSL command: {text!r}")
 
     action, raw_amount = match.groups()
     amount = int(raw_amount)
@@ -65,19 +83,36 @@ def interpret_command(text: str, boiler: Boiler) -> None:
         boiler.decrease_temperature(amount)
 
 
-boiler = Boiler()
-interpret_command("increase -> boiler temperature -> 3 degrees", boiler)
-assert boiler.temperature == 86
+if __name__ == "__main__":
+    boiler = Boiler(temperature=83)
+    interpret_command("increase -> boiler temperature -> 3 degrees", boiler)
+    print(f"Boiler temperature: {boiler.temperature}°C")
+```
+
+**Sample Output:**
+```text
+Boiler temperature: 86°C
 ```
 
 ---
 
 ## 5. Use Cases & When to Skip
-- **Use when:** Domain experts or power users need an expressive rule/automation language (smart-home rules, query filters, billing formulas) without full Python/code execution risks (`eval()`).
-- **When to Skip:** For complex grammars, use a real parser library (`pyparsing`, `lark`) instead of hand-rolled regexes; never use `eval()` on untrusted user strings.
+* **When to Use:**
+  * Domain experts need safe, readable rule/automation scripts (smart-home rules, query filters, billing formulas).
+* **When to Skip:**
+  * For complex nested grammars, use a dedicated parser (`pyparsing`, `lark`) instead of regex; for simple configs, use YAML/JSON.
 
 ---
 
-## 6. Rapid Follow-Up Q&As
-- **Q: Internal vs. External DSL?**  
-  **A:** **Internal DSL** reuses the host language's syntax/runtime (e.g., SQLAlchemy expressions in Python); **External DSL** defines its own standalone grammar/syntax (e.g., SQL, regex, smart-house commands).
+## 6. Don't Confuse With
+
+| Pattern | Key Difference |
+| :--- | :--- |
+| **[Command](command.md)** | Encapsulates **programmatic** actions with `undo()`; Interpreter evaluates **language/DSL grammar**. |
+| **[Strategy](strategy.md)** | Swaps complete algorithms; Interpreter evaluates expressions/rules written in a DSL. |
+
+---
+
+## 7. Rapid Interview Q&As
+* **Q: Internal vs. External DSL?**  
+  **A:** **Internal DSL** reuses the host language's syntax (e.g., SQLAlchemy queries in Python); **External DSL** has its own standalone syntax (e.g., SQL, regex, smart-home commands).
