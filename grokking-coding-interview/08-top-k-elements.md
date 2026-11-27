@@ -7,23 +7,23 @@ tags: [top-k, heaps, quickselect, python, coding-interview]
 summary: "Find the K largest, smallest, most frequent, or closest elements using a bounded heap of size K in O(n log K) time."
 ---
 
-# 08. Top 'K' Elements
+# 08. Top 'K' Elements ⭐
 
-## 1. Trigger Signals (When to Use)
-* Problem asks for the **top `K`**, **`K` largest / smallest**, **`K` most frequent**, or **`K` closest** items.
-* Better than full $O(n \log n)$ sorting when $K \ll n$.
+## 1. Trigger Signals & Brute Force -> Optimal
+* **Triggers:** **Top `K`**, **`K` largest / smallest**, **`K` most frequent**, or **`K` closest** items.
+* **Brute Force → Optimal:** Sorting all $n$ items takes $O(n \log n)$. Keeping a bounded heap of size $K$ reduces time to **$O(n \log K)$** and space to **$O(K)$**.
 
 ---
 
-## 2. Mental Model
+## 2. Mental Model & Dry-Run Trace
 
 ```mermaid
 flowchart LR
-    Stream["Input Stream (n items)"] -->|"push & if len > k: pop min"| Heap["Min-Heap of size K"]
-    Heap --> Ans["Heap holds Top K largest!"]
+    Stream["Unsorted Input"] -->|"push & if len > K: pop min"| Heap["Min-Heap (size K)"]
+    Heap --> Ans["Heap holds Top K largest"]
 ```
-* **Top K Largest** → keep a **Min-Heap** of size `K` (pop smallest when `len > k`).
-* **Top K Smallest** → keep a **Max-Heap** of size `K` (negate values in Python, pop largest when `len > k`).
+* **Top K Largest** → **Min-Heap** of size `K` (evict smallest).
+* **Top K Smallest** → **Max-Heap** of size `K` (evict largest, using `-val`).
 
 ---
 
@@ -34,12 +34,15 @@ import heapq
 
 
 def top_k_largest(nums: list[int], k: int) -> list[int]:
+    """Return the `k` largest elements from `nums` in O(n log k) time."""
     heap: list[int] = []
     for num in nums:
         heapq.heappush(heap, num)
         if len(heap) > k:
-            heapq.heappop(heap)
+            heapq.heappop(heap)  # Evict smallest so only top K remain
     return heap
+
+# Example: sorted(top_k_largest([3, 1, 5, 12, 2, 11], 3)) -> [5, 11, 12]
 ```
 
 ---
@@ -47,8 +50,7 @@ def top_k_largest(nums: list[int], k: int) -> list[int]:
 ## 4. Must-Know Classic Problems
 
 ### Problem A: Top K Frequent Elements
-Count frequencies with `Counter`, then keep a Min-Heap of size `k` (or bucket sort by frequency for $O(n)$).
-* **Time:** $O(n \log k)$ (or $O(n)$ with buckets) | **Space:** $O(n)$
+* **Time:** $O(n \log k)$ | **Space:** $O(n)$
 
 ```python
 import heapq
@@ -56,12 +58,14 @@ from collections import Counter
 
 
 def top_k_frequent(nums: list[int], k: int) -> list[int]:
+    """Return the `k` most frequent elements in `nums`."""
     counts = Counter(nums)
     return heapq.nlargest(k, counts.keys(), key=counts.get)  # type: ignore[arg-type]
+
+# Example: top_k_frequent([1, 1, 1, 2, 2, 3], 2) -> [1, 2]
 ```
 
 ### Problem B: K Closest Points to Origin
-Maintain a Max-Heap of size `k` storing `(-dist_sq, x, y)`.
 * **Time:** $O(n \log k)$ | **Space:** $O(k)$
 
 ```python
@@ -69,24 +73,32 @@ import heapq
 
 
 def k_closest(points: list[list[int]], k: int) -> list[list[int]]:
+    """Return `k` points closest to (0, 0) using a size-k Max-Heap."""
     heap: list[tuple[int, int, int]] = []
     for x, y in points:
-        dist = -(x * x + y * y)
+        neg_dist = -(x * x + y * y)  # Squared distance avoids float sqrt
         if len(heap) < k:
-            heapq.heappush(heap, (dist, x, y))
-        elif dist > heap[0][0]:
-            heapq.heapreplace(heap, (dist, x, y))
+            heapq.heappush(heap, (neg_dist, x, y))
+        elif neg_dist > heap[0][0]:
+            heapq.heapreplace(heap, (neg_dist, x, y))
     return [[x, y] for _, x, y in heap]
+
+# Example: k_closest([[1, 3], [-2, 2]], 1) -> [[-2, 2]]
 ```
 
 ---
 
-## 5. Edge Cases & Common Traps
-* **`heapq.heapreplace(heap, item)`** is faster than `heappop` + `heappush` when the heap is already at capacity `k`.
-* **Distance comparison:** Use squared distance `x*x + y*y`—never `math.sqrt` (avoids float inaccuracy and extra cost).
+## 5. Edge Cases & Pattern vs. Pattern
+* **`k <= 0` or `k >= len(nums)`:** Guard `if k <= 0: return []`.
+
+| Pattern | When to Choose |
+| :--- | :--- |
+| **Bounded Heap (`O(n log K)`)** | Streaming data or guaranteed $O(n \log K)$ worst case. |
+| **Quickselect (`O(n)` avg)** | Offline $K$-th element in $O(1)$ space (worst-case $O(n^2)$). |
+| **Bucket Sort (`O(n)`)** | Top $K$ Frequent when frequencies are bounded in `1..n`. |
 
 ---
 
 ## 6. Rapid Follow-Up Q&As
-- **Q: How can you find the Kth largest element in $O(n)$ average time?**  
-  **A:** **Quickselect** (Hoare's partition)—$O(n)$ average, $O(n^2)$ worst case, $O(1)$ space. Use a Min-Heap when $O(n \log k)$ worst-case guarantee or streaming is needed.
+* **Q: Why use `heapq.heapreplace(heap, item)` instead of `heappop` + `heappush`?**  
+  **A:** `heapreplace` pops and pushes in a single sift operation instead of two.

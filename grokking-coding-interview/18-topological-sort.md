@@ -9,20 +9,24 @@ summary: "Find a valid linear ordering of vertices in a Directed Acyclic Graph (
 
 # 18. Topological Sort (Graph)
 
-## 1. Trigger Signals (When to Use)
-* Tasks/courses have **prerequisites or dependencies** (`u` must come before `v`).
-* Problem asks for a **valid build/execution order**, **Alien Dictionary**, or **cycle detection in a directed graph**.
+## 1. Trigger Signals & Brute Force -> Optimal
+* **Triggers:** Tasks/courses have **prerequisites (`u -> v`)**, **build order**, **Alien Dictionary**, or **cycle detection in a directed graph**.
+* **Kahn's Algorithm:** Repeatedly peel off nodes with `in_degree == 0` in **$O(V + E)$ time**.
 
 ---
 
-## 2. Mental Model (Kahn's Algorithm)
+## 2. Mental Model & Dry-Run Trace
 
 ```mermaid
 flowchart LR
     In0["Queue nodes with in_degree == 0"] --> Pop["Pop u, append to order"]
-    Pop --> Dec["For neighbor v: in_degree[v] -= 1; if 0 -> enqueue"]
-    Dec --> Cycle{"len(order) == num_nodes?"}
+    Pop --> Dec["Decrement in_degree[v]; if 0 -> enqueue"]
 ```
+
+**Dry-Run (`0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3`):**
+1. `in_degree = [0, 1, 1, 2]` → `q = [0]`
+2. Pop `0` → `order=[0]`, `in_degree[1]=0, in_degree[2]=0` → `q = [1, 2]`
+3. Pop `1`, `2` → `in_degree[3]=0` → Pop `3` → `order = [0, 1, 2, 3]`
 
 ---
 
@@ -33,10 +37,11 @@ from collections import defaultdict, deque
 
 
 def topological_sort(num_nodes: int, edges: list[tuple[int, int]]) -> list[int]:
+    """Return a topological ordering of a DAG, or [] if a cycle exists."""
     graph: dict[int, list[int]] = defaultdict(list)
     in_degree = [0] * num_nodes
 
-    for u, v in edges:  # u -> v (u must come before v)
+    for u, v in edges:  # Directed edge: u must come before v
         graph[u].append(v)
         in_degree[v] += 1
 
@@ -51,7 +56,7 @@ def topological_sort(num_nodes: int, edges: list[tuple[int, int]]) -> list[int]:
             if in_degree[v] == 0:
                 q.append(v)
 
-    return order if len(order) == num_nodes else []  # [] means cycle exists
+    return order if len(order) == num_nodes else []  # Cycle if not all nodes visited
 ```
 
 ---
@@ -59,27 +64,28 @@ def topological_sort(num_nodes: int, edges: list[tuple[int, int]]) -> list[int]:
 ## 4. Must-Know Classic Problems
 
 ### Problem A: Course Schedule II
-Input gives `[course, prereq]`, so edge is `prereq -> course`.
 * **Time:** $O(V + E)$ | **Space:** $O(V + E)$
 
 ```python
 def find_order(num_courses: int, prerequisites: list[list[int]]) -> list[int]:
+    """Return a valid course order given [course, prereq] pairs, or [] if impossible."""
     return topological_sort(num_courses, [(pre, crs) for crs, pre in prerequisites])
-```
 
-### Problem B: Alien Dictionary (Derive Character Order)
-Compare adjacent words `w1, w2` to find the first differing char `(c1 -> c2)`; watch for invalid prefix `"abc"` before `"ab"`.
-* **Time:** $O(C)$ total characters | **Space:** $O(1)$ (26-letter alphabet)
+# Example: find_order(4, [[1,0],[2,0],[3,1],[3,2]]) -> [0, 1, 2, 3]
+```
 
 ---
 
-## 5. Edge Cases & Common Traps
-* **Edge direction:** `[course, prereq]` means `prereq -> course`, NOT `course -> prereq`.
-* **Disconnected components & isolated nodes:** Initialize `in_degree` for **all** `0..num_nodes - 1` so nodes with 0 edges still appear in `order`.
-* **Cycle detection:** If `len(order) < num_nodes`, a cycle exists and no valid ordering is possible.
+## 5. Edge Cases & Pattern vs. Pattern
+* **Edge direction:** `[course, prereq]` means `prereq -> course`.
+
+| Pattern | When to Choose |
+| :--- | :--- |
+| **Topological Sort** | **Directed** dependencies (DAG) and directed cycle detection. |
+| **[Union-Find](21-union-find.md)** | **Undirected** connectivity and undirected cycle detection. |
 
 ---
 
 ## 6. Rapid Follow-Up Q&As
-- **Q: Kahn's BFS vs. DFS Topological Sort?**  
-  **A:** **Kahn's BFS** is iterative (no recursion limit issues) and detects cycles naturally via `len(order) < V`. **DFS** pushes nodes on post-order exit and reverses the list (using 3-color `0/1/2` state for cycle detection).
+* **Q: Kahn's BFS vs. DFS Topological Sort?**  
+  **A:** Kahn's BFS is iterative (no recursion limit) and detects cycles directly via `len(order) < V`.

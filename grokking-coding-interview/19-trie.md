@@ -9,9 +9,9 @@ summary: "Store strings in a prefix tree for O(L) word insertion, exact lookup, 
 
 # 19. Trie (Prefix Tree)
 
-## 1. Trigger Signals (When to Use)
-* Problem involves **autocomplete**, **prefix matching (`starts_with`)**, **word dictionary with `.` wildcards**, or **Word Search II** on a board.
-* Looking up many words sharing common prefixes faster than scanning a list.
+## 1. Trigger Signals & Brute Force -> Optimal
+* **Triggers:** **Autocomplete**, **`starts_with(prefix)`**, **wildcard `.` dictionary**, or **Word Search II** on a board.
+* **Brute Force → Optimal:** Scanning a word list takes $O(N \cdot L)$ per prefix query. A Trie resolves queries in **$O(L)$** time (where $L$ is word length).
 
 ---
 
@@ -19,9 +19,7 @@ summary: "Store strings in a prefix tree for O(L) word insertion, exact lookup, 
 
 ```mermaid
 flowchart TD
-    Root["(root)"] -->|c| C["c"]
-    C -->|a| CA["ca"]
-    CA -->|t| CAT["cat (is_end=True)"]
+    Root["(root)"] -->|c| C["c"] -->|a| CA["ca"] -->|t| CAT["cat (is_end=True)"]
     CA -->|r| CAR["car (is_end=True)"]
 ```
 
@@ -31,16 +29,23 @@ flowchart TD
 
 ```python
 class TrieNode:
+    """Single character node in a Prefix Tree."""
+
+    __slots__ = ("children", "is_end")
+
     def __init__(self) -> None:
         self.children: dict[str, "TrieNode"] = {}
         self.is_end: bool = False
 
 
 class Trie:
+    """Prefix Tree supporting O(L) insert, exact search, and prefix lookup."""
+
     def __init__(self) -> None:
         self.root = TrieNode()
 
     def insert(self, word: str) -> None:
+        """Insert `word` into the Trie."""
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -49,10 +54,12 @@ class Trie:
         node.is_end = True
 
     def search(self, word: str) -> bool:
+        """Return True only if exact `word` was inserted."""
         node = self._walk(word)
         return node is not None and node.is_end
 
     def starts_with(self, prefix: str) -> bool:
+        """Return True if any inserted word starts with `prefix`."""
         return self._walk(prefix) is not None
 
     def _walk(self, text: str) -> TrieNode | None:
@@ -69,11 +76,12 @@ class Trie:
 ## 4. Must-Know Classic Problems
 
 ### Problem A: Design Add and Search Words (Wildcard `.`)
-When `ch == '.'`, DFS across all `node.children.values()`.
-* **Time:** $O(L)$ exact, $O(26^L)$ worst-case with wildcards | **Space:** $O(\text{total chars})$
+* **Time:** $O(L)$ exact, $O(26^L)$ worst-case wildcards | **Space:** $O(\text{total chars})$
 
 ```python
 class WordDictionary(Trie):
+    """Trie extended to support '.' wildcard matching any single character."""
+
     def search_wildcard(self, word: str) -> bool:
         def dfs(idx: int, node: TrieNode) -> bool:
             if idx == len(word):
@@ -86,16 +94,22 @@ class WordDictionary(Trie):
             return dfs(idx + 1, node.children[ch])
 
         return dfs(0, self.root)
+
+# Example: insert("bad"); search_wildcard(".ad") -> True
 ```
 
 ---
 
-## 5. Edge Cases & Common Traps
-* **Prefix vs. Full Word:** `"car"` inserted does NOT mean `search("ca")` is `True`—check `node.is_end`.
-* **Memory in Python:** For huge dictionaries, using `__slots__ = ("children", "is_end")` on `TrieNode` cuts memory significantly.
+## 5. Edge Cases & Pattern vs. Pattern
+* **Prefix vs. Word:** Inserting `"car"` means `starts_with("ca") == True`, but `search("ca") == False` unless `is_end` is `True`.
+
+| Pattern | When to Choose |
+| :--- | :--- |
+| **Trie** | Prefix queries, autocomplete, wildcard matching, pruning board DFS. |
+| **Hash Set (`set`)** | Exact whole-word lookup only (simpler, lower memory). |
 
 ---
 
 ## 6. Rapid Follow-Up Q&As
-- **Q: Trie vs. Hash Set for word lookup?**  
-  **A:** Both are $O(L)$ for exact `search()`, but a **Trie** supports $O(L)$ `starts_with(prefix)` and lexicographical/wildcard traversal without scanning all keys.
+* **Q: Why use `__slots__` on `TrieNode`?**  
+  **A:** Eliminating per-node `__dict__` cuts memory overhead dramatically when storing thousands of words.

@@ -7,23 +7,26 @@ tags: [fast-slow-pointers, linked-list, cycle-detection, python, coding-intervie
 summary: "Floyd's Tortoise and Hare algorithm using two pointers moving at 1x and 2x speeds to detect cycles and find midpoints in O(1) space."
 ---
 
-# 02. Fast & Slow Pointers
+# 02. Fast & Slow Pointers ⭐
 
-## 1. Trigger Signals (When to Use)
-* **Cycle detection** in a linked list or sequence (e.g., Happy Number).
-* Finding the **middle node** of a linked list in a single pass.
-* Finding the **start of a cycle** or **palindrome linked list** in $O(1)$ space.
+## 1. Trigger Signals & Brute Force -> Optimal
+* **Triggers:** Cycle detection in a linked list or sequence, finding the **middle node**, or finding the **cycle entrance** in $O(1)$ space.
+* **Brute Force → Optimal:** Storing visited nodes in a `set` takes $O(n)$ space. Moving `slow` by 1 step and `fast` by 2 steps guarantees they meet inside any cycle in **$O(n)$ time and $O(1)$ space**.
 
 ---
 
-## 2. Mental Model
+## 2. Mental Model & Dry-Run Trace
 
 ```mermaid
 flowchart LR
-    H["head"] --> N1["1"] --> N2["2 (slow +1)"] --> N3["3"] --> N4["4 (fast +2)"] --> N2
+    H["head"] --> N1["1"] --> N2["2 (cycle start)"] --> N3["3"] --> N4["4"] --> N2
 ```
-* If there is a cycle, `fast` (2 steps) will eventually lap and meet `slow` (1 step).
-* If `fast` reaches `None`, there is no cycle.
+
+**Dry-Run (Cycle `1 -> 2 -> 3 -> 4 -> 2`):**
+1. Start: `slow = 1, fast = 1`
+2. Step 1: `slow = 2, fast = 3`
+3. Step 2: `slow = 3, fast = 2`
+4. Step 3: `slow = 4, fast = 4` → `slow is fast` → **Cycle detected!**
 
 ---
 
@@ -37,11 +40,12 @@ class ListNode:
 
 
 def has_cycle(head: ListNode | None) -> bool:
+    """Return True if the linked list contains a cycle using O(1) extra space."""
     slow = fast = head
     while fast and fast.next:
         slow = slow.next
         fast = fast.next.next
-        if slow is fast:
+        if slow is fast:  # Compare node identity, not value
             return True
     return False
 ```
@@ -50,30 +54,33 @@ def has_cycle(head: ListNode | None) -> bool:
 
 ## 4. Must-Know Classic Problems
 
-### Problem A: Find the Middle of a Linked List
-When `fast` reaches the end, `slow` is at the middle (second middle for even length).
+### Problem A: Middle of the Linked List
 * **Time:** $O(n)$ | **Space:** $O(1)$
 
 ```python
 def middle_node(head: ListNode | None) -> ListNode | None:
+    """Return the middle node (second middle if length is even)."""
     slow = fast = head
     while fast and fast.next:
         slow = slow.next
         fast = fast.next.next
     return slow
+
+# Example: [1, 2, 3, 4, 5] -> node(3); [1, 2, 3, 4] -> node(3)
 ```
 
 ### Problem B: Linked List Cycle II (Find Cycle Start)
-After `slow` and `fast` meet, reset one pointer to `head` and advance both by 1 step—they meet at the cycle entrance.
 * **Time:** $O(n)$ | **Space:** $O(1)$
 
 ```python
 def detect_cycle_start(head: ListNode | None) -> ListNode | None:
+    """Return the node where the cycle begins, or None if acyclic."""
     slow = fast = head
     while fast and fast.next:
         slow = slow.next
         fast = fast.next.next
         if slow is fast:
+            # Reset one pointer to head; advancing both by 1 meets at cycle start
             ptr = head
             while ptr is not slow:
                 ptr = ptr.next
@@ -83,11 +90,11 @@ def detect_cycle_start(head: ListNode | None) -> ListNode | None:
 ```
 
 ### Problem C: Happy Number
-Repeatedly sum squares of digits; if `1` is reached return `True`, if a cycle forms return `False`.
 * **Time:** $O(\log n)$ | **Space:** $O(1)$
 
 ```python
 def is_happy(n: int) -> bool:
+    """Detect whether summing squared digits reaches 1 or enters an endless cycle."""
     def next_num(x: int) -> int:
         total = 0
         while x:
@@ -100,16 +107,22 @@ def is_happy(n: int) -> bool:
         slow = next_num(slow)
         fast = next_num(next_num(fast))
     return fast == 1
+
+# Example: is_happy(19) -> True; is_happy(2) -> False
 ```
 
 ---
 
-## 5. Edge Cases & Common Traps
-* **Loop condition:** Always check `while fast and fast.next:` (not `while fast.next:`), otherwise `fast.next.next` raises `AttributeError` when `fast` is `None`.
-* **Identity vs. Value:** Compare nodes with `slow is fast`, not `slow.val == fast.val`.
+## 5. Edge Cases & Pattern vs. Pattern
+* **Loop guard:** Always check `while fast and fast.next:`—checking only `fast.next` crashes on `head = None`.
+
+| Pattern | When to Choose |
+| :--- | :--- |
+| **Fast & Slow Pointers** | Linked list cycle/midpoint in $O(1)$ space. |
+| **Hash Set (`visited`)** | Graph traversal where nodes have multiple neighbors (not a singly linked list). |
 
 ---
 
 ## 6. Rapid Follow-Up Q&As
-- **Q: Why does resetting one pointer to `head` after meeting find the cycle start?**  
-  **A:** If distance to cycle start is $F$ and meeting point is $a$ steps into a cycle of length $C$, then $2(F + a) = F + a + kC \implies F = kC - a$. Moving $F$ steps from `head` and $F$ steps from the meeting point lands both at the cycle start.
+* **Q: Why does resetting one pointer to `head` after meeting find the cycle entrance?**  
+  **A:** With distance $F$ to cycle start, meeting offset $a$, and cycle length $C$: $2(F + a) = F + a + kC \implies F = kC - a$. Walking $F$ steps from `head` and $F$ steps from the meeting point lands both at the entrance.

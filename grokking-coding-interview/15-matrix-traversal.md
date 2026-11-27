@@ -7,11 +7,11 @@ tags: [matrix, grid, dfs, bfs, python, coding-interview]
 summary: "Traverse 2D grids with DFS/BFS and 4-directional offsets for islands, flood fill, and shortest grid paths."
 ---
 
-# 15. Matrix Traversal
+# 15. Matrix Traversal ⭐
 
-## 1. Trigger Signals (When to Use)
-* Input is a **2D grid (`list[list[int]]` or `list[list[str]]`)**.
-* Problem asks for **number of islands**, **flood fill**, **rotting oranges** (multi-source BFS), or **shortest path in a grid**.
+## 1. Trigger Signals & Brute Force -> Optimal
+* **Triggers:** **2D grid** (`list[list[str]]` / `list[list[int]]`) asking for **connected components (islands)**, **flood fill**, or **minimum steps / multi-source spread**.
+* **DFS vs. BFS:** Use **DFS** for connected components/flood fill; use **BFS** for shortest path / minimum minutes.
 
 ---
 
@@ -19,10 +19,10 @@ summary: "Traverse 2D grids with DFS/BFS and 4-directional offsets for islands, 
 
 ```mermaid
 flowchart TD
-    Cell["(r, c)"] --> D1["(r-1, c) Up"]
-    Cell --> D2["(r+1, c) Down"]
-    Cell --> D3["(r, c-1) Left"]
-    Cell --> D4["(r, c+1) Right"]
+    Cell["(r, c)"] --> D1["(r-1, c)"]
+    Cell --> D2["(r+1, c)"]
+    Cell --> D3["(r, c-1)"]
+    Cell --> D4["(r, c+1)"]
 ```
 
 ---
@@ -33,13 +33,14 @@ flowchart TD
 DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 
-def grid_dfs(grid: list[list[str]], r: int, c: int) -> None:
+def flood_dfs(grid: list[list[str]], r: int, c: int) -> None:
+    """Mark all connected '1' cells starting at (r, c) as visited ('0')."""
     rows, cols = len(grid), len(grid[0])
     if not (0 <= r < rows and 0 <= c < cols) or grid[r][c] != "1":
         return
-    grid[r][c] = "0"  # Mark visited in-place (or use a visited set)
+    grid[r][c] = "0"  # Mark visited immediately before recursing
     for dr, dc in DIRS:
-        grid_dfs(grid, r + dr, c + dc)
+        flood_dfs(grid, r + dr, c + dc)
 ```
 
 ---
@@ -47,10 +48,11 @@ def grid_dfs(grid: list[list[str]], r: int, c: int) -> None:
 ## 4. Must-Know Classic Problems
 
 ### Problem A: Number of Islands (DFS)
-* **Time:** $O(R \cdot C)$ | **Space:** $O(R \cdot C)$ worst-case recursion
+* **Time:** $O(R \cdot C)$ | **Space:** $O(R \cdot C)$
 
 ```python
 def num_islands(grid: list[list[str]]) -> int:
+    """Count distinct islands of '1's in a 2D binary grid."""
     if not grid:
         return 0
     rows, cols = len(grid), len(grid[0])
@@ -72,7 +74,6 @@ def num_islands(grid: list[list[str]]) -> int:
 ```
 
 ### Problem B: Rotting Oranges (Multi-Source BFS)
-Enqueue **all** initially rotten oranges at `t = 0` and spread level-by-level.
 * **Time:** $O(R \cdot C)$ | **Space:** $O(R \cdot C)$
 
 ```python
@@ -80,6 +81,7 @@ from collections import deque
 
 
 def oranges_rotting(grid: list[list[int]]) -> int:
+    """Return minimum minutes until no fresh orange (1) remains, or -1 if impossible."""
     rows, cols = len(grid), len(grid[0])
     q: deque[tuple[int, int]] = deque()
     fresh = 0
@@ -87,7 +89,7 @@ def oranges_rotting(grid: list[list[int]]) -> int:
     for r in range(rows):
         for c in range(cols):
             if grid[r][c] == 2:
-                q.append((r, c))
+                q.append((r, c))  # Seed BFS with all rotten sources at t = 0
             elif grid[r][c] == 1:
                 fresh += 1
 
@@ -99,20 +101,26 @@ def oranges_rotting(grid: list[list[int]]) -> int:
             for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1:
-                    grid[nr][nc] = 2
+                    grid[nr][nc] = 2  # Mark visited WHEN enqueuing
                     fresh -= 1
                     q.append((nr, nc))
     return minutes if fresh == 0 else -1
+
+# Example: oranges_rotting([[2,1,1],[1,1,0],[0,1,1]]) -> 4
 ```
 
 ---
 
-## 5. Edge Cases & Common Traps
-* **Mark visited *when enqueuing* in BFS**, not when popping—otherwise the same cell gets pushed multiple times, causing TLE/MLE.
-* **Check bounds before indexing:** Always verify `0 <= nr < rows and 0 <= nc < cols`.
+## 5. Edge Cases & Pattern vs. Pattern
+* **Mark visited on enqueue (BFS):** Marking on pop causes duplicate queue entries and TLE/MLE.
+
+| Pattern | When to Choose |
+| :--- | :--- |
+| **Grid DFS** | Flood fill, island counting, existence checks. |
+| **Grid BFS** | Shortest unweighted grid path or multi-source spread. |
 
 ---
 
 ## 6. Rapid Follow-Up Q&As
-- **Q: What if mutating the input `grid` is not allowed?**  
-  **A:** Maintain a `visited: set[tuple[int, int]]` instead of overwriting `grid[r][c]`.
+* **Q: What if mutating the input `grid` is forbidden?**  
+  **A:** Track visited coordinates in `visited: set[tuple[int, int]]` instead of overwriting `grid[r][c]`.
