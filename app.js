@@ -144,16 +144,20 @@
     return null;
   }
 
+  function encodePathSegments(str) {
+    return str.split('/').map((s) => encodeURIComponent(s)).join('/');
+  }
+
   function buildGitHubWebUrl(owner, repo, branch, path) {
     const base = `https://github.com/${owner}/${repo}`;
     if (!path) return base;
     const isFile = /\.md$/i.test(path);
     const kind = isFile ? 'blob' : 'tree';
-    return `${base}/${kind}/${encodeURIComponent(branch)}/${path}`;
+    return `${base}/${kind}/${encodePathSegments(branch)}/${path}`;
   }
 
   function buildRawUrl(owner, repo, branch, path) {
-    return `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${path}`;
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${encodePathSegments(branch)}/${path}`;
   }
 
   /* =========================================================
@@ -405,7 +409,13 @@
     if (directFilePromise) {
       await directFilePromise;
     } else {
+      const prevPath = state.path;
       await resolveAndRenderNonFilePath(state.path, fragment);
+      if (state.path !== prevPath) {
+        el.urlInput.value = buildGitHubWebUrl(state.owner, state.repo, state.branch, state.path);
+        el.openGithubLink.href = el.urlInput.value;
+        syncBrowserHistory(fragment, true);
+      }
     }
 
     renderBreadcrumbs();
@@ -425,7 +435,14 @@
     }
 
     renderFileTree(el.treeFilter.value);
+    const requestedPath = state.path;
     await resolveAndRenderNonFilePath(state.path, fragment);
+    if (state.path !== requestedPath) {
+      const resolvedUrl = buildGitHubWebUrl(state.owner, state.repo, state.branch, state.path);
+      el.urlInput.value = resolvedUrl;
+      el.openGithubLink.href = resolvedUrl;
+      syncBrowserHistory(fragment, true);
+    }
     renderBreadcrumbs();
     renderPager();
   }
@@ -588,10 +605,14 @@
   }
 
   function resolveRelativePath(baseFilePath, relPath) {
-    const baseDir = baseFilePath.includes('/')
-      ? baseFilePath.slice(0, baseFilePath.lastIndexOf('/') + 1)
-      : '';
-    const stack = baseDir.split('/').filter(Boolean);
+    const stack = relPath.startsWith('/')
+      ? []
+      : (baseFilePath.includes('/')
+          ? baseFilePath.slice(0, baseFilePath.lastIndexOf('/') + 1)
+          : ''
+        )
+          .split('/')
+          .filter(Boolean);
     const segments = relPath.split('/');
 
     for (const seg of segments) {
@@ -652,6 +673,10 @@
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const [pathPart, frag = ''] = href.split('#');
+        if (!pathPart) {
+          scrollToFragment(frag);
+          return;
+        }
         const cleanRel = decodeURIComponent(pathPart);
         const resolved = resolveRelativePath(currentDirPath, cleanRel);
         navigateToPath(resolved, frag);
@@ -935,7 +960,7 @@
   /* =========================================================
      URL & Browser History Sync (file:// safe)
      ========================================================= */
-  function syncBrowserHistory(fragment = '') {
+  function syncBrowserHistory(fragment = '', replace = false) {
     const params = new URLSearchParams();
     params.set('repo', `${state.owner}/${state.repo}`);
     if (state.branch !== 'main') params.set('branch', state.branch);
@@ -947,8 +972,24 @@
       return;
     }
 
+    const historyState = {
+      owner: state.owner,
+      repo: state.repo,
+      branch: state.branch,
+      path: state.path,
+      fragment
+    };
     const nextUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ ...state }, '', nextUrl);
+    try {
+      if (replace) {
+        window.history.replaceState(historyState, '', nextUrl);
+      } else {
+        window.history.pushState(historyState, '', nextUrl);
+      }
+    } catch {
+      // Fallback safely if History API is restricted
+      window.location.hash = params.toString();
+    }
   }
 
   function loadFromLocation() {
